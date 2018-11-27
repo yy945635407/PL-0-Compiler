@@ -1,0 +1,20 @@
+program wow;
+const a := 1,b:=2;
+var c,d;
+procedure p1();
+begin
+a := 1
+end
+begin
+c := a/b;
+c := a - b * c;
+call subprogram(x,y);
+read(c);
+write(c);
+while a<b do
+    a := a+10;
+if a<b then
+    a := 10
+else
+    a := 15
+end1
