@@ -47,6 +47,7 @@ class parser:
                "no end":"\"end\" is expected","no statement":"a statement is expected","no then":"\"then\" is expected",
                "no do":"\"do\" is expected","no lexp":"a lexp is expected","no lop":"a lop is expected",
                "no aop": "an aop is expected","no mop":"a mop is expected"}
+    reportedi = []#已经报错的index
     def prog(self):
         #处理program
         if self.lex.sym() != "program":
@@ -400,36 +401,83 @@ class parser:
                   "\" is expected")
 
     def find(self,ftype):# 跳过不在非终结符 ftype 的first集合中的字符并输出错误,返回是否找到 ftype 的first集合,
-        # 若字符串相似度大于0.5，则认为是输入错误
+        # 若字符串相似度大于0.5，则认为是输入错误，也考虑成找到的情况
         result = True
+        misspelled=False #是否拼写错误
+        rightword = "" #出现拼写错误时的正确单词
         if self.lex.sym() == False:#已到结尾
             result = False
+
         elif ftype == "id" or ftype == "const": #const和id的first集合相同
             while self.lex.gettype() != "标识符":
                 if self.lex.gettype() != "标识符":
                     print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" + "非法符号:"+self.lex.sym())
                 self.lex.advance()
+
         elif ftype =="integer":
             while self.lex.gettype() != "常数":
                 if self.lex.gettype() != "常数":
                     print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" + "非法符号:"+self.lex.sym())
                 self.lex.advance()
+
         elif ftype == "statement":#statement的first集合包含id的first集合
             while self.lex.sym() not in self.first["statement"] and self.lex.gettype() != "标识符":
                 if self.lex.sym() not in self.first["statement"] and self.lex.gettype() != "标识符":
-                    print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" + "非法符号:"+self.lex.sym())
+                    for str in self.first[ftype]:
+                        # 比较当前词和应有词的相似度
+                        if difflib.SequenceMatcher(None, self.lex.sym(), str).quick_ratio()>=0.5:
+                            misspelled=True
+                            rightword = str
+                            break
+                    if misspelled==True:
+                        if  self.lex.i not in self.reportedi:#未报过错则报错
+                            print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
+                                self.lex.sym()+"\t"+"misspelled!\t"+rightword+" is expected")
+                            self.reportedi.append(self.lex.i)
+                        return True
+                    print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
+                              "非法符号:"+self.lex.sym())
                 self.lex.advance()
+
         elif ftype =="lexp" or ftype == "exp" or ftype=="term" or ftype=="factor":#他们的first集合包含id和integer的first集合
             while self.lex.sym() not in self.first[ftype] and self.lex.gettype() != "标识符" \
                     and self.lex.gettype() != "常数":
                 if self.lex.sym() not in self.first[ftype] and self.lex.gettype() != "标识符" \
                         and self.lex.gettype() !="常数":
-                    print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" + "非法符号:"+self.lex.sym())
+                    for str in self.first[ftype]:
+                        # 比较当前词和应有词的相似度
+                        if difflib.SequenceMatcher(None, self.lex.sym(), str).quick_ratio()>=0.5:
+                            misspelled=True
+                            rightword = str
+                            break
+                    if misspelled==True:
+                        if self.lex.i not in self.reportedi:
+                            print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
+                                  self.lex.sym() + "\t" + "misspelled!\t" + rightword + " is expected")
+                            self.reportedi.append(self.lex.i)
+                        return True
+
+                    print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
+                              "非法符号:"+self.lex.sym())
                 self.lex.advance()
         else:
             while self.lex.sym() not in self.first[ftype]:
                 if self.lex.sym() not in self.first[ftype]:
-                    print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" + "非法符号:"+self.lex.sym())
+                    for str in self.first[ftype]:
+                        # 比较当前词和应有词的相似度
+                        if difflib.SequenceMatcher(None, self.lex.sym(), str).quick_ratio()>=0.5:
+                            misspelled=True
+                            rightword = str
+                            break
+                    if misspelled==True:
+                        if self.lex.i not in self.reportedi:
+                            print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
+                                  self.lex.sym() + "\t" + "misspelled!\t" + rightword + " is expected")
+                            self.reportedi.append(self.lex.i)
+                        return True
+
+                    print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
+                              "非法符号:"+self.lex.sym())
                 self.lex.advance()
         return result
 
