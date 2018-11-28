@@ -431,8 +431,7 @@ class parser:
                             break
                     if misspelled==True:
                         if  self.lex.i not in self.reportedi:#未报过错则报错
-                            print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
-                                self.lex.sym()+"\t"+"misspelled!\t"+rightword+" is expected")
+                            self.error("no "+rightword,False)
                             self.reportedi.append(self.lex.i)
                         return True
                     print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
@@ -452,8 +451,7 @@ class parser:
                             break
                     if misspelled==True:
                         if self.lex.i not in self.reportedi:
-                            print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
-                                  self.lex.sym() + "\t" + "misspelled!\t" + rightword + " is expected")
+                            self.error("no " + rightword,False)
                             self.reportedi.append(self.lex.i)
                         return True
 
@@ -471,8 +469,7 @@ class parser:
                             break
                     if misspelled==True:
                         if self.lex.i not in self.reportedi:
-                            print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" +
-                                  self.lex.sym() + "\t" + "misspelled!\t" + rightword + " is expected")
+                            self.error("no " + rightword,False)
                             self.reportedi.append(self.lex.i)
                         return True
 
