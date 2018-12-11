@@ -67,32 +67,25 @@ class parser:
             return
         if self.find(";",["block"])!="miss":#缺失不跳过
             self.lex.advance()
-        #跳过不在id的block集合中的词
-
-        if self.find("block",["const",":=","id","statement"])==False:
-            return
-        if self.find("block",["const",":=","id","statement"])!="miss":
-            self.block()
+        #由于block的情况特殊，很多东西可有可无，所以直接进入block，缺失或错误会在block中处理
+        self.block()
 
     def block(self):
-        if self.lex.sym() in self.first["condecl"] or self.lex.i in self.reportedi.keys() \
-                and self.reportedi[self.lex.i] in self.first["condecl"]:
+        if self.find("condecl",["vardecl","proc","body"],False)==True:#缺失则不进入condecl
             self.condecl()
-            if self.find("vardecl",["proc"],False)==True:
+            if self.find("vardecl",["proc","body"],False)==True:
                 self.vardecl()
-                if self.find("proc",["body"])!=False:
+                if self.find("proc",["body"],False)==True:
                     self.proc()
             elif self.find("proc",["body"])!=False:
                 self.proc()
 
-        elif self.lex.sym() in self.first["vardecl"] or self.lex.i in self.reportedi.keys() \
-                and self.reportedi[self.lex.i] in self.first["vardecl"]:
+        elif self.find("vardecl",["proc","body"],False)==True:
             self.vardecl()
-            if self.find("proc",False)==True:
+            if self.find("proc",["body"],False)==True:
                 self.proc()
 
-        elif self.lex.sym() in self.first["proc"] or self.lex.i in self.reportedi.keys() \
-                and self.reportedi[self.lex.i] in self.first["proc"]:
+        elif self.find("proc",["body"],False)==True:
             self.proc()
 
         if self.find("body",["statement"]) == False:
@@ -107,8 +100,11 @@ class parser:
             return
         if self.find("const",[",",";"])!="miss":
             self.const()
-        while self.lex.sym() == ',':
-            self.lex.advance()
+        while self.lex.sym() == ',' or self.infirst("const"):
+            if self.infirst("const"):#若下一字符是来自const，则缺失','
+                self.error("no ,",False,True)
+            else:
+                self.lex.advance()
             if self.find("const",[",",";"])==False:
                 return
             if self.find("const", [",", ";"])!="miss":
@@ -143,8 +139,11 @@ class parser:
             return
         if self.find("id", [",", ";"])!="miss":
             self.id()
-        while self.lex.sym() == ',':
-            self.lex.advance()
+        while self.lex.sym() == ',' or self.infirst("id"):
+            if self.infirst("id"):
+                self.error("no ,",False,True)
+            else:
+                self.lex.advance()
             if self.find("id",[",",";"])==False:
                 return
             if self.find("id", [",", ";"])!="miss":
@@ -170,8 +169,11 @@ class parser:
         #处理<id>
         if self.lex.gettype() == "标识符":
             self.id()
-            while self.lex.sym() == ',':
-                self.lex.advance()
+            while self.lex.sym() == ',' or self.infirst("id"):
+                if self.infirst("id"):
+                    self.error("no ,",False,True)
+                else:
+                    self.lex.advance()
                 if self.find("id",[",",")"])==False:
                     return
                 if self.find("id", [",", ")"])!="miss":
@@ -191,7 +193,9 @@ class parser:
             return
         if self.find("block", ["const","id",":="])!="miss":
             self.block()
-        while self.lex.sym() == ';':
+        while self.lex.sym() == ';' or self.infirst("proc"):
+            if self.infirst("proc"):
+                self.error("no ,",False,True)
             self.lex.advance()
             if self.find("proc",["body",";"]) == False:
                 return
@@ -286,8 +290,11 @@ class parser:
             #处理<exp>
             if self.lex.sym() in self.first["exp"] or self.lex.gettype() == "标识符":
                 self.exp()
-                while self.lex.sym() == ',':
-                    self.lex.advance()
+                while self.lex.sym() == ',' or self.infirst("exp"):
+                    if self.infirst("exp"):
+                        self.error("no ,",False,True)
+                    else:
+                        self.lex.advance()
                     if self.find("exp",[",",")"])==False:
                         return
                     if self.find("exp", [",", ")"])!="miss":
@@ -311,8 +318,11 @@ class parser:
                 return
             if self.find("id", [",", ")"])!="miss":
                 self.id()
-            while self.lex.sym() == ',':
-                self.lex.advance()
+            while self.lex.sym() == ',' or self.infirst("id"):
+                if self.infirst("id"):
+                    self.error("no ,",False,True)
+                else:
+                    self.lex.advance()
                 if self.find("id",[",",")"]) == False:
                     return
                 if self.find("id", [",", ")"])!="miss":
@@ -335,8 +345,11 @@ class parser:
                 return
             if self.find("exp",[",", ")"])!="miss":
                 self.exp()
-            while self.lex.sym() == ',':
-                self.lex.advance()
+            while self.lex.sym() == ',' or self.infirst("exp"):
+                if self.infirst("exp"):
+                    self.error("no ,",False,True)
+                else:
+                    self.lex.advance()
                 if self.find("exp",[",",")"]) == False:
                     return
                 if self.find("exp", [",", ")"])!="miss":
@@ -438,6 +451,8 @@ class parser:
             self.lex.advance()
 
     def error(self,i="base",jump=True,miss=False):
+        # 报错函数，jump为真时下移一步
+        # miss为True时说明缺失的是不在errorinfo中的终结符，如','
         if jump:
             self.lex.advance()
         elif miss:
@@ -447,9 +462,6 @@ class parser:
             print("line:" + self.lex.getline()[:len(self.lex.getline()) - 1] + "\t" + self.lex.sym() + "\t" +
                 self.errorinfo[i])
 
-        # else:
-        #     print("line:" + self.lex.getpreline()[:len(self.lex.getpreline()) - 1] + "\t\"" + i.split(" ")[1] +
-        #           "\" is expected")
 
     def infirst(self,ftype):#返回当前词是否在非终结符ftype的first集合中
         result=True
@@ -465,7 +477,10 @@ class parser:
         else:
             result = self.lex.sym() in self.first[ftype]
         return result
-    def find(self,ftype,follow=[],neccessary=True):# 跳过不在非终结符 ftype 的first集合中的字符并输出错误,返回是否找到 ftype 的first集合,
+    def find(self,ftype,follow=[],neccessary=True):
+        # 跳过不在非终结符 ftype 的first集合中的单词（或相似单词）并输出错误,返回是否找到 ftype 的first集合;
+        # 若在找到ftype的first集合中的单词前找到follow中的first集合中的单词，则认为缺失了ftype,返回"miss"
+        # neccessary表示是否需要报错（缺失是否致命，eg:vardecl可有可无）
         # 若字符串相似度大于0.5，则认为是输入错误，也考虑成找到的情况
         result = True
         misspelled=False #是否拼写错误
@@ -481,25 +496,23 @@ class parser:
                     for str in self.first[ftype]:
                         # 比较当前词和应有词的相似度
                         if difflib.SequenceMatcher(None, self.lex.sym(), str).quick_ratio()>=0.6:
-                            misspelled=True
-                            rightword = str
-                            break
-                    if misspelled==True:
-                        if self.lex.i not in self.reportedi.keys() and neccessary:
-                            self.error("no " + rightword,False)
-                            self.reportedi[self.lex.i]=rightword
-                        return True
-                    # 检测当前读取到的字符是否是下一块的字符，若是则缺失当前所需的终结符
+                            # 拼写错误，报错并认为这个单词是正确的，继续向下分析
+                            rightword = str#正确的单词
+                            if self.lex.i not in self.reportedi.keys():
+                                self.error("no " + rightword,False)
+                                self.reportedi[self.lex.i]=rightword
+                            return True
+                    # 检测当前读取到的字符是否是follow中的字符，若是则缺失当前所需的终结符
                     if len(follow)>0:
                         for foll in follow:
+                            flag = False
                             if foll not in self.first.keys():#终结符
                                 if self.lex.sym() == foll:
-                                    if self.lex.i not in self.reportedi.keys() and neccessary:
-                                        self.error("no " + ftype, False, True)
-                                        self.reportedi[self.lex.i]=foll
-                                    return "miss"
+                                    flag = True
                             elif self.infirst(foll):#在foll的first集合中
-                                if self.lex.i not in self.reportedi and neccessary:
+                                    flag = True
+                            if flag:
+                                if self.lex.i not in self.reportedi.keys() and neccessary:
                                     self.error("no " + ftype, False, True)
                                     self.reportedi[self.lex.i] = self.lex.sym()
                                 return "miss"
@@ -514,20 +527,20 @@ class parser:
                 if self.lex.sym() != ftype:
                     #检测是否是拼写错误
                     if difflib.SequenceMatcher(None, self.lex.sym(), ftype).quick_ratio() >= 0.6:
-                        if self.lex.i not in self.reportedi.keys() and neccessary:
+                        if self.lex.i not in self.reportedi.keys():
                             self.error("no " + ftype, False)
                             self.reportedi[self.lex.i] = ftype
                         return True
-                    #检测当前读取到的字符是否是下一块的字符，若是则缺失当前所需的终结符
+                    #检测当前读取到的字符是否是follow中的字符，若是则缺失当前所需的终结符
                     if len(follow) > 0:
                         for foll in follow:
+                            flag = False
                             if foll not in self.first.keys():
                                 if self.lex.sym() == foll:
-                                    if self.lex.i not in self.reportedi.keys() and neccessary:
-                                        self.error("no " + ftype, False, True)
-                                        self.reportedi[self.lex.i] = foll
-                                    return "miss"
+                                    flag = True
                             elif self.infirst(foll):
+                                flag = True
+                            if flag:
                                 if self.lex.i not in self.reportedi.keys() and neccessary:
                                     self.error("no " + ftype, False,True)
                                     self.reportedi[self.lex.i] = self.lex.sym()
