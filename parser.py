@@ -1,57 +1,84 @@
 import difflib
-class lexical:
-    i = 0
-    lines = []
-
+import lexical
+class lexicalimpl:
+    #词法分析器实现类
     def __init__(self):
-        f = open("result.txt")
-        self.lines = f.readlines()
-        f.close()
+        self.i = 0  # 词法单元索引
+        self.lines = []
+        self.lex = lexical.lexical()
+        # 分别记录前一个，当前，下一个词法单元
+        self.previous = ""
+        self.current = ""
+        self.next = ""
+        # f = open("result.txt")
+        # self.lines = f.readlines()
+        # f.close()
+        self.current = self.lex.analyse()
+        self.next = self.lex.analyse()
     def sym(self):#取词
-        if self.i == len(self.lines):
+        # if self.i == len(self.lines):
+        #     return False
+        # return self.lines[self.i].split('.')[0]
+        if self.current != None:
+            return self.current.split('.')[0]
+        else:
             return False
-        return self.lines[self.i].split('.')[0]
     def gettype(self):#得到类别
-        return self.lines[self.i].split('.')[1]
+        # return self.lines[self.i].split('.')[1]
+        return self.current.split('.')[1]
     def getline(self):#得到行号
-        return self.lines[self.i].split('.')[2]
+        # return self.lines[self.i].split('.')[2]
+         return self.current.split('.')[2]
     def getpreline(self):#得到前一个行号
-        if self.i<len(self.lines) and self.getline() == "1\n":
+        # if self.i<len(self.lines) and self.getline() == "1\n":
+        #     return "1\n"
+        # return self.lines[self.i-1].split('.')[2]
+        if self.previous == "":
             return "1\n"
-        return self.lines[self.i-1].split('.')[2]
+        else:
+            return self.previous.split('.')[2]
     def advance(self):
         self.i += 1
+        self.previous = self.current
+        self.current = self.next
+        if self.next != None:
+            self.next = self.lex.analyse()
 
 class parser:
-    lex = lexical()
-    first={"prog":["program"],"block":["const","var","procedure","begin"],"condecl":["const"],
-           "vardecl":["var"],"proc":["procedure"]
-           ,"body":["begin"],"statement":["if","while","call","begin","read","write"],"lexp":["odd","(","+","-"],
-           "exp":["+","-","("],
-           "term":["("],"factor":["("],"lop":["=","<>","<","<=",">",">="],"aop":["+","-"],"mop":["*","/"],
-           "id":[],"integer":[],"const":[]}
-    #note:
-    # first["const"]=first["id"],first["statement"]=first["id"]+first["body"]+"if"+"while"...
-    # first["lexp"]=first["exp"]+"odd",first["exp"]=first["term"]+ "+" + "-",first["term"]=first["factor"]
-    # first["factor"]=first["id"]+first["integer"]+"(",
-    # then:
-    # first["const"] = first["id"], first["statement"] = first["id"] + "begin" + "if" + "while"...
-    # first["lexp"]=first["id"]+first["integer"]+"("+ "+" + "-"+"odd",
-    # first["exp"]=first["id"]+first["integer"]+"("+ "+" + "-",
-    # first["term"]=first["id"]+first["integer"]+"("
-    # first["factor"]=first["id"]+first["integer"]+"(",
-    # if self.gettype=="标识符",self.sym is in first["id"];
-    # if self.gettype=="常数",self.sym is in first["integer"];
-    follow = {}
-    errorinfo={"base":"error","no prog":"\"program\" is expected","no program":"\"program\" is expected",
-               "no id":"an id is expected","no ;":"\";\" is expected","no const":"\"const\" is expected",
-               "no :=":"\":=\" is expected","no num":"a num is expected","no var":"\"var\" is expected",
-               "no proc":"\"procedure\" is expected","no procedure":"\"procedure\" is expected","no (":"\"(\" is expected","no )":"\")\" is expected",
-               "no begin":"\"begin\" is expected","no end":"\"end\" is expected",
-               "no statement":"a statement is expected","no then":"\"then\" is expected",
-               "no do":"\"do\" is expected","no lexp":"a lexp is expected","no lop":"a lop is expected",
-               "no aop": "an aop is expected","no mop":"a mop is expected"}
-    reportedi = {}#已被找出是拼写错误的下标以及正确的词
+    #语法分析器
+    def __init__(self):
+        self.lex = lexicalimpl()
+        self.first = {"prog": ["program"], "block": ["const", "var", "procedure", "begin"], "condecl": ["const"],
+                 "vardecl": ["var"], "proc": ["procedure"]
+            , "body": ["begin"], "statement": ["if", "while", "call", "begin", "read", "write"],
+                 "lexp": ["odd", "(", "+", "-"],
+                 "exp": ["+", "-", "("],
+                 "term": ["("], "factor": ["("], "lop": ["=", "<>", "<", "<=", ">", ">="], "aop": ["+", "-"],
+                 "mop": ["*", "/"],
+                 "id": [], "integer": [], "const": []}
+        # note:
+        # first["const"]=first["id"],first["statement"]=first["id"]+first["body"]+"if"+"while"...
+        # first["lexp"]=first["exp"]+"odd",first["exp"]=first["term"]+ "+" + "-",first["term"]=first["factor"]
+        # first["factor"]=first["id"]+first["integer"]+"(",
+        # then:
+        # first["const"] = first["id"], first["statement"] = first["id"] + "begin" + "if" + "while"...
+        # first["lexp"]=first["id"]+first["integer"]+"("+ "+" + "-"+"odd",
+        # first["exp"]=first["id"]+first["integer"]+"("+ "+" + "-",
+        # first["term"]=first["id"]+first["integer"]+"("
+        # first["factor"]=first["id"]+first["integer"]+"(",
+        # if self.gettype=="标识符",self.sym is in first["id"];
+        # if self.gettype=="常数",self.sym is in first["integer"];
+        self.follow = {}
+        self.errorinfo = {"base": "error", "no prog": "\"program\" is expected", "no program": "\"program\" is expected",
+                     "no id": "an id is expected", "no ;": "\";\" is expected", "no const": "\"const\" is expected",
+                     "no :=": "\":=\" is expected", "no num": "a num is expected", "no var": "\"var\" is expected",
+                     "no proc": "\"procedure\" is expected", "no procedure": "\"procedure\" is expected",
+                     "no (": "\"(\" is expected", "no )": "\")\" is expected",
+                     "no begin": "\"begin\" is expected", "no end": "\"end\" is expected",
+                     "no statement": "a statement is expected", "no then": "\"then\" is expected",
+                     "no do": "\"do\" is expected", "no lexp": "a lexp is expected", "no lop": "a lop is expected",
+                     "no aop": "an aop is expected", "no mop": "a mop is expected"}
+        self.reportedi = {}  # 已被找出是拼写错误的下标以及正确的词/已经报错过的词法单元索引
     def prog(self):
         #处理program
         if self.find("program",["id"]) ==False:
