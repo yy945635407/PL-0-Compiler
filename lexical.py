@@ -56,8 +56,8 @@ class lexical:
     def InsertConst(self,strToken):
         self.const.append(strToken)
 
-    def analise(self):
-        f = open("result.txt","w")
+    def analyse(self):
+        # f = open("result.txt","w")
         while True:
             result = ""
             self.strToken=""
@@ -116,17 +116,20 @@ class lexical:
                 break
             else:
                 print("line",self.line,"col",self.col,":error!",self.ch,"is unexpected!")
-            f.write(result)
-        f.close()
-        f = open("id.txt", "w")
-        f.write(','.join(lex.id))
-        f.close()
-        f = open("const.txt", "w")
-        f.write(','.join(lex.const))
-        f.close()
 
-lex = lexical()
-lex.analise()
+            if result != "":
+                return result
+        #     f.write(result)
+        # f.close()
+        # f = open("id.txt", "w")
+        # f.write(','.join(lex.id))
+        # f.close()
+        # f = open("const.txt", "w")
+        # f.write(','.join(lex.const))
+        # f.close()
+
+# lex = lexical()
+# lex.analise()
 
 
 
