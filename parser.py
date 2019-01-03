@@ -1,4 +1,5 @@
 import difflib
+
 import lexical
 class lexicalimpl:
     #词法分析器实现类
@@ -79,6 +80,7 @@ class parser:
                      "no do": "\"do\" is expected", "no lexp": "a lexp is expected", "no lop": "a lop is expected",
                      "no aop": "an aop is expected", "no mop": "a mop is expected"}
         self.reportedi = {}  # 已被找出是拼写错误的下标以及正确的词/已经报错过的词法单元索引
+
     def prog(self):
         #处理program
         if self.find("program",["id"]) ==False:
@@ -580,3 +582,4 @@ class parser:
 
 gram = parser()
 gram.prog()
+
