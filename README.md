@@ -26,7 +26,7 @@ A Compiler for PL/0
     <integer> → d{d}
 
 ## File Organization:
-lexical.py: lexical analyzer
-parser.py: grammer analyzer, semantic analyzer combined with code generater.It's also the main procedure
-Pcodes.py: class for PseudoCode and class for its table
-symbols.py: class for symbol and class for symbol table
+    lexical.py: lexical analyzer
+    parser.py: grammer analyzer, semantic analyzer combined with code generater.It's also the main procedure
+    Pcodes.py: class for PseudoCode and class for its table
+    symbols.py: class for symbol and class for symbol table
