@@ -1,6 +1,6 @@
 # PL-0-Compiler
 A Compiler for PL/0
-Grammer for this language(Expanded Backus paradigm):
+## Grammer for this language(Expanded Backus paradigm):
 <prog> → program <id>；<block>
 <block> → [<condecl>][<vardecl>][<proc>]<body>
 <condecl> → const <const>{,<const>};
@@ -25,7 +25,7 @@ Grammer for this language(Expanded Backus paradigm):
 <id> → l{l|d}   （ps：l for letters）
 <integer> → d{d}
 
-File Organization:
+## File Organization:
 lexical.py: lexical analyzer
 parser.py: grammer analyzer, semantic analyzer combined with code generater.It's also the main procedure
 Pcodes.py: class for PseudoCode and class for its table
